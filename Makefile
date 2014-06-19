@@ -2,7 +2,7 @@ LIBPATH=-L ~/prusslib/lib/
 INCLUDEPATH=-I ~/prusslib/include/
 LIBS+=-lprussdrv
 PASM=~/prusslib/pasm
-EXECUTABLE=example
+EXECUTABLE=prudht22
 
 all: $(EXECUTABLE)  $(EXECUTABLE).bin $(EXECUTABLE).o 
 %.o: %.cpp
