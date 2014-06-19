@@ -18,7 +18,8 @@ int main(int argc, char **argv) {
 	std::cout << "Starting example" << std::endl;
    
 	// Initialize the PRU
-    prussdrv_init ();
+	prussdrv_init ();
+	
 
 	// Open PRU interrupt
 	unsigned int ret = prussdrv_open(PRU_EVTOUT_0);
@@ -45,7 +46,7 @@ int main(int argc, char **argv) {
 	// Executing program
 	
 	std::cout << "Executing program" << std::endl;
-    prussdrv_exec_program (PRU_NUM, path.c_str());
+	prussdrv_exec_program (PRU_NUM, path.c_str());
 	
 	// Wait for PRU to halt
 	std::cout << "Waiting for halt" << std::endl;
@@ -57,5 +58,5 @@ int main(int argc, char **argv) {
 	// Cleanup
 	prussdrv_pru_clear_event (PRU_EVTOUT_0, PRU0_ARM_INTERRUPT);
 	prussdrv_pru_disable (PRU_NUM);
-    prussdrv_exit ();
+	prussdrv_exit ();
 }
