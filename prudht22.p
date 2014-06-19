@@ -24,7 +24,8 @@
 
 // Adress of PRU Control Register (see 3.1.2 Table 5) + Offset of
 // CTBIR0 Register (0x20h, see 5.4.6)
-// This register is used to set the block indices which are used to modify entries
+// This register is used to set the block indices which are used to
+//	modify entries
 // 24 and 25 in the PRU Constant Table.
 // Bits 0-7 => C24_BLK_INDEX
 // Bits 16-23 => C25_BLK_INDEX
@@ -46,8 +47,8 @@ START:
 		// Set local register r1 to CTBIR0
 		MOV r1, CTBIR0
 		//Set CTBIR0 to address of local mem
-	    SBBO r0, r1, 0, 4
-        // C24 aka CONST_RAM points to local memory
+		SBBO r0, r1, 0, 4
+		// C24 aka CONST_RAM points to local memory
 		// We are done
 
 		//Store data in local memory in order to read it from host
@@ -56,13 +57,13 @@ START:
 		SBCO r0, CONST_RAM, 0, 4
 		
 		// initialize loop counter
-		MOV	r1, DELAYCOUNT
-	    MOV r30, 1<<5
-	    // wait for specified period of time
+		MOV r1, DELAYCOUNT
+		MOV r30, 1<<5
+		// wait for specified period of time
 DELAY:
 		SUB	r1, r1, 1     // decrement loop counter
 		QBNE	DELAY, r1, 0  // repeat loop unless zero
 		MOV r30, 0
-        // tell host we're done, then halt
+		// tell host we're done, then halt
 		MOV	R31.b0, PRU0_R31_VEC_VALID | SIGNUM
 		HALT
