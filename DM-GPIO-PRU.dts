@@ -25,9 +25,12 @@
              __overlay__ {
                   pinctrl_test: DM_GPIO_Test_Pins {
 			pinctrl-single,pins = <
-			   0x034 0x06  /* Set P8_11 to Mode 6 => r30_15 */
-			   0x030 0x06  /* Set P8_12 to Mode 6 => r30_14 */
-			   0x1a4 0x5   /* Set P9_27 to Mode 5 => r30_5  */
+			  // 0x034 0x06  /* Set P8_11 to Mode 6 => r30_15 (OUTPUT) */
+			  // 0x030 0x06  /* Set P8_12 to Mode 6 => r30_14 (OUTPUT) */
+			   //0x1a4 0x06   /* Set P9_27 to Mode 5 => r30_5  (INPUT) */
+			  // 0x03c 0x06  /* Set P8_15 to Input */
+		          // 0x38  0x06  /* Set P8_16 to Input */
+		          0x184 0x26
 			>;
 		  };
              };

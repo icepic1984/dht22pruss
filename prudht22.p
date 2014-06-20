@@ -34,7 +34,7 @@
 // When everything is setup properply C24 points to local memory
 #define CONST_RAM C24
 		
-#define DELAY_SECONDS 1 // adjust this to experiment
+#define DELAY_SECONDS 5 // adjust this to experiment
 #define CLOCK 200000000 // PRU is always clocked at 200MHz
 #define CLOCKS_PER_LOOP 2 // loop contains two instructions, one clock each
 #define DELAYCOUNT DELAY_SECONDS * CLOCK / CLOCKS_PER_LOOP
@@ -58,12 +58,13 @@ START:
 		
 		// initialize loop counter
 		MOV r1, DELAYCOUNT
-		MOV r30, 1<<5
+		//MOV r30, 1<<5
 		// wait for specified period of time
 DELAY:
 		SUB	r1, r1, 1     // decrement loop counter
-		QBNE	DELAY, r1, 0  // repeat loop unless zero
-		MOV r30, 0
+		QBNE DELAY, r1, 0  // repeat loop unless zero
+		//MOV r30, 0
+		WBS r31.t16
 		// tell host we are done, then halt
 		MOV	R31.b0, PRU0_R31_VEC_VALID | SIGNUM
 		HALT

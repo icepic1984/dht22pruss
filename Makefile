@@ -16,8 +16,8 @@ all: $(EXECUTABLE)  $(EXECUTABLE).bin $(EXECUTABLE).o $(DEVICEOVERLAY).dtbo
 	$(PASM) -b $<
 
 %.dtbo: %.dts
-	dtc -O dtb -o $@ -b 0 -@ $<
-	cp $@ /lib/firmware
+	dtc -O dtb -o $(basename $@)-00A0.dtbo -b 0 -@ $<
+	cp $(basename $@)-00A0.dtbo /lib/firmware
 
 clean: 
 	-rm -rf $(EXECUTABLE) $(EXECUTABLE).o $(EXECUTABLE).bin
