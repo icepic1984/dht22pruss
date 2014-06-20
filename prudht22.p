@@ -13,7 +13,7 @@
 // Program entry point, used by debugger only
 .entrypoint START 
 
-// To signal the host that we're done, we set bit 5 in our R31
+// To signal the host that we are done, we set bit 5 in our R31
 // simultaneously with putting the number of the signal we want
 // into R31 bits 0-3. See 5.2.2.2 
 #define PRU0_R31_VEC_VALID (1<<5)
@@ -64,6 +64,6 @@ DELAY:
 		SUB	r1, r1, 1     // decrement loop counter
 		QBNE	DELAY, r1, 0  // repeat loop unless zero
 		MOV r30, 0
-		// tell host we're done, then halt
+		// tell host we are done, then halt
 		MOV	R31.b0, PRU0_R31_VEC_VALID | SIGNUM
 		HALT

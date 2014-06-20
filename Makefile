@@ -3,8 +3,9 @@ INCLUDEPATH=-I ~/prusslib/include/
 LIBS+=-lprussdrv
 PASM=~/prusslib/pasm
 EXECUTABLE=prudht22
+DEVICEOVERLAY=DM-GPIO-PRU
 
-all: $(EXECUTABLE)  $(EXECUTABLE).bin $(EXECUTABLE).o 
+all: $(EXECUTABLE)  $(EXECUTABLE).bin $(EXECUTABLE).o $(DEVICEOVERLAY).dtbo
 %.o: %.cpp
 	g++ -c $(INCLUDEPATH) $< 
 
@@ -13,6 +14,10 @@ all: $(EXECUTABLE)  $(EXECUTABLE).bin $(EXECUTABLE).o
 
 %.bin : %.p
 	$(PASM) -b $<
+
+%.dtbo: %.dts
+	dtc -O dtb -o $@ -b 0 -@ $<
+	cp $@ /lib/firmware
 
 clean: 
 	-rm -rf $(EXECUTABLE) $(EXECUTABLE).o $(EXECUTABLE).bin
