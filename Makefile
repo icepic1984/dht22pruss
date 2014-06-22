@@ -1,7 +1,7 @@
 LIBPATH=-L ~/prusslib/lib/
 INCLUDEPATH=-I ~/prusslib/include/
 LIBS+=-lprussdrv
-PASM=~/prusslib/pasm
+PASM=~/prusslib/pasmc
 EXECUTABLE=prudht22
 DEVICEOVERLAY=DM-GPIO-PRU
 

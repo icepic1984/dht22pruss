@@ -11,7 +11,7 @@
 
 int main(int argc, char **argv) {
 
-	std::string path = "./prudht22.bin";
+	std::string path = "prudht22.bin";
 	// Interrupt 
 	tpruss_intc_initdata pruss_intc_initdata = PRUSS_INTC_INITDATA;
 
@@ -46,7 +46,7 @@ int main(int argc, char **argv) {
 	// Executing program
 	
 	std::cout << "Executing program" << std::endl;
-	prussdrv_exec_program (PRU_NUM, path.c_str());
+	prussdrv_exec_program (PRU_NUM, "prudht22.bin");
 	
 	// Wait for PRU to halt
 	std::cout << "Waiting for halt" << std::endl;
