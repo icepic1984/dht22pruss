@@ -26,7 +26,17 @@
 
 // waitForSignal need approx. 40 cycles
 #define WFS 40
-	
+
+.struct data
+		.u32   innercounter
+		.u32   outercounter
+		.u8    temp1                   // 32 bit field
+		.u8    temp0                 // 16 bit field
+		.u8    humi0                  //  8 bit field
+		.u8    humi1
+		.u8    check                             //  8 bit field
+		.u8    mask
+.ends
 // Program entry point, used by debugger only
 .entrypoint START 
 
@@ -74,11 +84,14 @@ START:
 		//Second 16Bit: Temperature
 		//Last 8Bit:  Checksum
 		//Loop for 40 bits
-		MOV r1, 0
-		MOV r8, 0
-		MOV r9,0
-		SET r9.t31
-READB:	
+		.assign data, R7, R10.w0, mdata
+		MOV mdata.mask, 128
+		MOV mdata.outercounter, 0
+		
+OUTER:	
+		MOV mdata.innercounter, 0
+
+INNER:	
 		//When DHT22 is sending data to mcu, every transmission begins
 		//with a low signal which last for 50us
 		waitForSignal PINNR, HIGH 
@@ -97,16 +110,46 @@ READB:
 
 
 		//Increment counter
-CONT:	ADD r1, r1, 1
-		LSR r9, r9, 1
+CONT:	ADD mdata.innercounter, mdata.innercounter, 1
+		LSR mdata.mask, mdata.mask,1
 		// Loop until all bits are read
-		QBGT READB, r1, 31
+		QBGT INNER, mdata.innercounter, 7
+
+		MOV mdata.mask, 128
+		ADD mdata.outercounter, mdata.outercounter,1
+		QBGT OUTER, mdata.outercounter, 4
+
+	
+		SBCO mdata.temp0, CONST_RAM, 0, 1
+//		SBCO mdata.humi0, CONST_RAM, 0, 1
 		
-		SBCO r8, CONST_RAM, 4, 4
+	
 		//// tell host we are done, then halt
 		MOV	R31.b0, PRU0_R31_VEC_VALID | SIGNUM
 		HALT
 
-BITSET:	OR r8, r8, r9
+BITSET: QBEQ TEMP0, mdata.outercounter, 0
+		QBEQ TEMP1, mdata.outercounter, 1
+		QBEQ HUMI0, mdata.outercounter, 2
+		QBEQ HUMI1, mdata.outercounter, 3
+		QBEQ CHECK, mdata.outercounter, 4
+		
+		
+TEMP0:	OR mdata.temp0, mdata.temp0, mdata.mask
 		JMP CONT
+
+TEMP1: 	OR mdata.temp1, mdata.temp1, mdata.mask
+		JMP CONT
+
+HUMI0:	OR mdata.humi0, mdata.humi0, mdata.mask
+		JMP CONT
+
+HUMI1:	OR mdata.humi1, mdata.humi1, mdata.mask
+		JMP CONT
+
+CHECK:	OR mdata.check, mdata.check, mdata.mask
+		JMP CONT
+
+ERROR:	mov r20, 0xdead
+		SBCO r20, CONST_RAM, 0, 4
 		
