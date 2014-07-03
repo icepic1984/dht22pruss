@@ -32,7 +32,7 @@
 		.u8    temperature1 
 		.u8    humidity0                   
 		.u8    humidity1
-        .u8    checksum
+		.u8    checksum
 		.u8    result
 .ends
 .struct dht22metadata
@@ -44,7 +44,7 @@
 START:
 		// Always make sure to clear the STANDBY_INIT bit in the SYSCFG
 		// register, otherwise the PRU will not be able to write outside the
-		// PRU memory space and to the BeagleBone's pins. The following three
+		// PRU memory space and to the BeagleBones pins. The following three
 		// lines at the top of a PRU assembly file will accomplish this. LBCO
 		// See Section 10.1.2 AMPI
 		LBCO r0, C4, 4, 4
