@@ -27,15 +27,16 @@
 // waitForSignal need approx. 40 cycles
 #define WFS 40
 
-.struct data
-		.u32   innercounter
-		.u32   outercounter
-		.u8    temp1                   // 32 bit field
-		.u8    temp0                 // 16 bit field
-		.u8    humi0                  //  8 bit field
-		.u8    humi1
-		.u8    check                             //  8 bit field
-		.u8    mask
+.struct dht22data
+		.u8    temperature0                  
+		.u8    temperature1 
+		.u8    humidity0                   
+		.u8    humidity1
+        .u8    checksum
+		.u8    result
+.ends
+.struct dht22metadata
+		.u32 mask
 .ends
 // Program entry point, used by debugger only
 .entrypoint START 
@@ -84,13 +85,10 @@ START:
 		//Second 16Bit: Temperature
 		//Last 8Bit:  Checksum
 		//Loop for 40 bits
-		.assign data, R7, R10.w0, mdata
-		MOV mdata.mask, 128
-		MOV mdata.outercounter, 0
-		
-OUTER:	
-		MOV mdata.innercounter, 0
-
+		.assign dht22data, r13, r14.w0, data
+		MOV data, 0
+		MOV r11,  0x80000000
+		MOV r12, 0
 INNER:	
 		//When DHT22 is sending data to mcu, every transmission begins
 		//with a low signal which last for 50us
@@ -105,51 +103,57 @@ INNER:
 		//waitForSignal takes approx 40 cycles per loop
 		//BBB runs with 200 instructions per us
 		//245 loop runs are approx 50us = 245 * 40 / 200	
-		QBLT BITSET, r6, 245
+		QBLT BITSET, r6, 245 
 		
 
-
+CONTINUE:
 		//Increment counter
-CONT:	ADD mdata.innercounter, mdata.innercounter, 1
-		LSR mdata.mask, mdata.mask,1
+		ADD r12, r12, 1
+		//Shift mask one bit to the right
+		LSR r11, r11, 1
 		// Loop until all bits are read
-		QBGT INNER, mdata.innercounter, 7
+		QBGT INNER, r12, 31
+		
+		//Read checksum
+		MOV data.checksum,0
+		MOV data.result, 0
+		MOV r11, 128
+		MOV r12, 0
 
-		MOV mdata.mask, 128
-		ADD mdata.outercounter, mdata.outercounter,1
-		QBGT OUTER, mdata.outercounter, 4
+CHECKSUM:
+		
+		waitForSignal PINNR, HIGH 
+		waitForSignal PINNR, LOW
+		QBLT BITSET_CHECKSUM, r6, 245
+CHECKSUM_CONTINUE:		
+		ADD r12, r12, 1
+		LSR r11, r11, 1
+		QBGT CHECKSUM, r12, 7 
 
-	
-		SBCO mdata.temp0, CONST_RAM, 0, 1
-//		SBCO mdata.humi0, CONST_RAM, 0, 1
+		//MOV r15,0
+		ADD r15.b0, r14.b0, r14.b1 
+		ADD r15.b0, r15.b0, r14.b2
+		ADD r15.b0, r15.b0, r14.b3
+		//ADD data.result.b0, data.temperature0, data.temperature1
+		//ADD data.result, data.result, data.humidity0
+		//ADD data.result, data.result, data.humidity1
+		//
+		SBCO data.humidity0, CONST_RAM, 0, 2
+		SBCO data.temperature0, CONST_RAM, 4, 2
+		
+		SBCO r15, CONST_RAM, 0, 4
+		SBCO data.checksum, CONST_RAM, 4, 4
 		
 	
 		//// tell host we are done, then halt
 		MOV	R31.b0, PRU0_R31_VEC_VALID | SIGNUM
 		HALT
+BITSET:
+		OR data, data, r11 
+		JMP CONTINUE
 
-BITSET: QBEQ TEMP0, mdata.outercounter, 0
-		QBEQ TEMP1, mdata.outercounter, 1
-		QBEQ HUMI0, mdata.outercounter, 2
-		QBEQ HUMI1, mdata.outercounter, 3
-		QBEQ CHECK, mdata.outercounter, 4
+BITSET_CHECKSUM:
+		OR data.checksum, data.checksum, r11.b0
+		JMP CHECKSUM_CONTINUE
 		
-		
-TEMP0:	OR mdata.temp0, mdata.temp0, mdata.mask
-		JMP CONT
-
-TEMP1: 	OR mdata.temp1, mdata.temp1, mdata.mask
-		JMP CONT
-
-HUMI0:	OR mdata.humi0, mdata.humi0, mdata.mask
-		JMP CONT
-
-HUMI1:	OR mdata.humi1, mdata.humi1, mdata.mask
-		JMP CONT
-
-CHECK:	OR mdata.check, mdata.check, mdata.mask
-		JMP CONT
-
-ERROR:	mov r20, 0xdead
-		SBCO r20, CONST_RAM, 0, 4
 		
