@@ -51,7 +51,6 @@ START:
 		CLR r0, r0, 4
 		SBCO r0, C4, 4, 4
 
-		//**********Initialize local memory**********
 		// Set local register r0 to local mem adress of pru
 		MOV r0, LOCAL_MEM
 		// Set local register r1 to CTBIR0
@@ -59,8 +58,6 @@ START:
 		//Set CTBIR0 to address of local mem
 		SBBO r0, r1, 0, 4
 		// C24 aka CONST_RAM points to local memory
-		// We are done
-		//**********Done**********
 	
 		// When communication between MCU and DHT begins MCU will pull down
 		// data bus for 1~10ms. Therefor, pull down and wait for 1ms.
