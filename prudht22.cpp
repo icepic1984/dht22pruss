@@ -40,9 +40,10 @@ int main(int argc, char **argv) {
 	   prussdrv_map_prumem (PRUSS0_PRU1_DATARAM, (void **)&data);
  
 	// Flush memory
-	data[0] = 0;
-	data[1] = 0;
-
+	for(int i = 0; i < 100; ++i){
+		data[i] = 0;
+	}
+	
 	// Executing program
 	
 	std::cout << "Executing program" << std::endl;
@@ -53,8 +54,19 @@ int main(int argc, char **argv) {
 	prussdrv_pru_wait_event (PRU_EVTOUT_0);
 	std::cout << "Done" << std::endl;
 	
-	std::cout << "Result: " <<data[0]<< std::endl;
-	std::cout << "Result: " <<data[1]<< std::endl;
+	std::cout << "Temp: " <<data[0]<< std::endl;
+	std::cout << "Humi: " <<data[1]<< std::endl;
+	std::cout << "Check: " <<data[2]<< std::endl;
+	std::cout << "Add: " <<data[3]<< std::endl;
+	std::cout << "All: " <<data[4]<<std::endl;
+
+	std::cout << "Temp0: " <<data[5]<< std::endl;
+	std::cout << "Temp1: " <<data[6]<< std::endl;
+	std::cout << "Humi0: " <<data[7]<< std::endl;
+	std::cout << "Humi1: " <<data[8]<< std::endl;
+
+
+
 	// Cleanup
 	prussdrv_pru_clear_event (PRU_EVTOUT_0, PRU0_ARM_INTERRUPT);
 	prussdrv_pru_disable (PRU_NUM);

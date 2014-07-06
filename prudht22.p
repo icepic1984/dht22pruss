@@ -27,14 +27,6 @@
 // waitForSignal need approx. 40 cycles
 #define WFS 40
 
-.struct dht22data
-		.u8    temperature0                  
-		.u8    temperature1 
-		.u8    humidity0                   
-		.u8    humidity1
-		.u8    checksum
-		.u8    result
-.ends
 .struct dht22metadata
 		.u32 mask
 .ends
@@ -82,11 +74,12 @@ START:
 		//Second 16Bit: Temperature
 		//Last 8Bit:  Checksum
 		//Loop for 40 bits
-		.assign dht22data, r13, r14.w0, data
-		MOV data, 0
+		//Initi Bitmask and counter
 		MOV r11,  0x80000000
 		MOV r12, 0
-INNER:	
+		//Result goes to r13
+		MOV r13, 0
+READDATA:	
 		//When DHT22 is sending data to mcu, every transmission begins
 		//with a low signal which last for 50us
 		waitForSignal PINNR, HIGH 
@@ -103,54 +96,63 @@ INNER:
 		QBLT BITSET, r6, 245 
 		
 
-CONTINUE:
+DATA_CONTINUE:
 		//Increment counter
 		ADD r12, r12, 1
 		//Shift mask one bit to the right
 		LSR r11, r11, 1
 		// Loop until all bits are read
-		QBGT INNER, r12, 31
+		QBGT READDATA, r12, 32
 		
 		//Read checksum
-		MOV data.checksum,0
-		MOV data.result, 0
 		MOV r11, 128
 		MOV r12, 0
-
+		//Result goes to r14
+		MOV r14,0
 CHECKSUM:
 		
 		waitForSignal PINNR, HIGH 
 		waitForSignal PINNR, LOW
 		QBLT BITSET_CHECKSUM, r6, 245
+		
 CHECKSUM_CONTINUE:		
 		ADD r12, r12, 1
 		LSR r11, r11, 1
-		QBGT CHECKSUM, r12, 7 
+		QBGT CHECKSUM, r12, 8 
 
-		//MOV r15,0
-		ADD r15.b0, r14.b0, r14.b1 
-		ADD r15.b0, r15.b0, r14.b2
-		ADD r15.b0, r15.b0, r14.b3
-		//ADD data.result.b0, data.temperature0, data.temperature1
-		//ADD data.result, data.result, data.humidity0
-		//ADD data.result, data.result, data.humidity1
-		//
-		SBCO data.humidity0, CONST_RAM, 0, 2
-		SBCO data.temperature0, CONST_RAM, 4, 2
+		//Add temperature and humidity and 8bit wise and compare to
+		//checksum
+		MOV r15,0
+		ADD r15.b0, r13.b0, r13.b1 
+		ADD r15.b0, r15.b0, r13.b2
+		ADD r15.b0, r15.b0, r13.b3
 		
-		SBCO r15, CONST_RAM, 0, 4
-		SBCO data.checksum, CONST_RAM, 4, 4
+		SBCO r13.b0, CONST_RAM, 0, 2
+		SBCO r13.b2, CONST_RAM, 4, 2
+		SBCO r14.b0, CONST_RAM, 8, 2
+		SBCO r15.b0, CONST_RAM, 12,2
+
+		SBCO r13.b0, CONST_RAM, 20, 1
+		SBCO r13.b1, CONST_RAM, 24, 1
+		SBCO r13.b2, CONST_RAM, 28, 1
+		SBCO r13.b3, CONST_RAM, 32, 1
+
+
+
+		
+//		SBCO r15, CONST_RAM, 0, 4
+//		SBCO r14, CONST_RAM, 4, 4
 		
 	
 		//// tell host we are done, then halt
 		MOV	R31.b0, PRU0_R31_VEC_VALID | SIGNUM
 		HALT
 BITSET:
-		OR data, data, r11 
-		JMP CONTINUE
+		OR r13, r13, r11 
+		JMP DATA_CONTINUE
 
 BITSET_CHECKSUM:
-		OR data.checksum, data.checksum, r11.b0
+		OR r14, r14, r11
 		JMP CHECKSUM_CONTINUE
 		
 		
