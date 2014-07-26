@@ -1,13 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <prussdrv.h>
-#include <pruss_intc_mapping.h>
 #include <iostream>
 #include <vector>
-
+#include <stdio.h>
+#include <errno.h>
+#include <unistd.h>
+#include <prussdrv.h>
+#include <pruss_intc_mapping.h>
 // We are using PRU0
 #define PRU_NUM 0
+
 
 int main(int argc, char **argv) {
 
@@ -28,6 +31,13 @@ int main(int argc, char **argv) {
 		return -1;
 	}
 
+	ret = prussdrv_open(PRU_EVTOUT_1);
+	if (ret) {
+		std::cout << "prussdrv_open failed" << std::endl;
+		return -1;
+	}
+
+
 	// Initialize interrupt 
 	prussdrv_pruintc_init(&pruss_intc_initdata);
 
@@ -45,12 +55,18 @@ int main(int argc, char **argv) {
 	}
 	
 	// Executing program
-	
 	std::cout << "Executing program" << std::endl;
 	prussdrv_exec_program (PRU_NUM, "prudht22.bin");
 	
+	//std::cout << "Bla" <<prussdrv_pru_wait_event (PRU_EVTOUT_0)<<std::endl;
 	// Wait for PRU to halt
 	std::cout << "Waiting for halt" << std::endl;
+	
+	std::cout << prussdrv_pru_wait_event(PRU_EVTOUT_1)<<std::endl;
+	prussdrv_pru_clear_event (PRU_EVTOUT_1, PRU0_ARM_INTERRUPT);
+	std::cout << prussdrv_pru_wait_event(PRU_EVTOUT_1) << std::endl;
+	prussdrv_pru_clear_event (PRU_EVTOUT_1, PRU0_ARM_INTERRUPT);
+
 	prussdrv_pru_wait_event (PRU_EVTOUT_0);
 	std::cout << "Done" << std::endl;
 	

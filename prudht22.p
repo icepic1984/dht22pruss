@@ -142,6 +142,10 @@ CHECKSUM_CONTINUE:
 //		SBCO r15, CONST_RAM, 0, 4
 //		SBCO r14, CONST_RAM, 4, 4
 		
+		delayms 10
+		MOV	R31.b0, PRU0_R31_VEC_VALID | 4 
+		delayms 10
+		MOV	R31.b0, PRU0_R31_VEC_VALID | 4 
 	
 		//// tell host we are done, then halt
 		MOV	R31.b0, PRU0_R31_VEC_VALID | SIGNUM
