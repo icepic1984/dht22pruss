@@ -95,7 +95,6 @@ READDATA:
 		//245 loop runs are approx 50us = 245 * 40 / 200	
 		QBLT BITSET, r6, 245 
 		
-
 DATA_CONTINUE:
 		//Increment counter
 		ADD r12, r12, 1
