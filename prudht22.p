@@ -27,6 +27,7 @@
 // waitForSignal need approx. 40 cycles
 #define WFS 40
 
+#define MAXLOOP 123	
 .struct dht22metadata
 		.u32 mask
 .ends
@@ -51,6 +52,7 @@ START:
 		SBBO r0, r1, 0, 4
 		// C24 aka CONST_RAM points to local memory
 	
+MAINLOOP:		
 		// When communication between MCU and DHT begins MCU will pull down
 		// data bus for 1~10ms. Therefor, pull down and wait for 1ms.
 		setPinMode PINNR, GPIO_OUTPUT
@@ -108,8 +110,8 @@ DATA_CONTINUE:
 		MOV r12, 0
 		//Result goes to r14
 		MOV r14,0
+
 CHECKSUM:
-		
 		waitForSignal PINNR, HIGH 
 		waitForSignal PINNR, LOW
 		QBLT BITSET_CHECKSUM, r6, 245
@@ -120,35 +122,33 @@ CHECKSUM_CONTINUE:
 		QBGT CHECKSUM, r12, 8 
 
 		//Add temperature and humidity and 8bit wise and compare to
-		//checksum
+		//checksum. Result goes to r15.
 		MOV r15,0
 		ADD r15.b0, r13.b0, r13.b1 
 		ADD r15.b0, r15.b0, r13.b2
 		ADD r15.b0, r15.b0, r13.b3
+
+		//When checksum != sum of humidity + temperature
+		//halt pru
+		QBNE QUIT, r15, r14
 		
-		SBCO r13.b0, CONST_RAM, 0, 2
-		SBCO r13.b2, CONST_RAM, 4, 2
-		SBCO r14.b0, CONST_RAM, 8, 2
-		SBCO r15.b0, CONST_RAM, 12,2
-
-		SBCO r13.b0, CONST_RAM, 20, 1
-		SBCO r13.b1, CONST_RAM, 24, 1
-		SBCO r13.b2, CONST_RAM, 28, 1
-		SBCO r13.b3, CONST_RAM, 32, 1
-
-
-
+		SBCO r13, CONST_RAM, 0, 2
+		SBCO r13.w2, CONST_RAM, 4, 2
 		
-//		SBCO r15, CONST_RAM, 0, 4
-//		SBCO r14, CONST_RAM, 4, 4
-		
-		delayms 10
-		MOV	R31.b0, PRU0_R31_VEC_VALID | 4 
-		delayms 10
-		MOV	R31.b0, PRU0_R31_VEC_VALID | 4 
+		//Inform host that we are done with this cycle by
+		//sending PRU_EVENT_0
+		//PRU_EVENT_0 needs to be the first event.
+		//Don't know why
+		MOV	R31.b0, PRU0_R31_VEC_VALID | 3
+		//Wait for two seconds to ensure specified behaviour.
+		delaysec 2 
+		LBCO r20, CONST_RAM, 8, 4
+		//Loop
+		QBNE MAINLOOP, r20, MAXLOOP
 	
+QUIT:	
 		//// tell host we are done, then halt
-		MOV	R31.b0, PRU0_R31_VEC_VALID | SIGNUM
+		MOV	R31.b0, PRU0_R31_VEC_VALID | 4 
 		HALT
 BITSET:
 		OR r13, r13, r11 

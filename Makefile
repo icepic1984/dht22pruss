@@ -1,13 +1,13 @@
 LIBPATH=-L ~/prusslib/lib/
 INCLUDEPATH=-I ~/prusslib/include/
-LIBS+=-lprussdrv
+LIBS+=-lprussdrv -lpthread
 PASM=~/prusslib/pasmc
 EXECUTABLE=prudht22
 DEVICEOVERLAY=DM-GPIO-PRU
 
 all: $(EXECUTABLE)  $(EXECUTABLE).bin $(EXECUTABLE).o $(DEVICEOVERLAY).dtbo
 %.o: %.cpp
-	g++ -c $(INCLUDEPATH) $< 
+	g++ -std=c++11 -c $(INCLUDEPATH) $< 
 
 % : %.o
 	g++  $(LIBPATH)  $(LIBS) $< -o $@

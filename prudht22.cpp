@@ -8,9 +8,26 @@
 #include <unistd.h>
 #include <prussdrv.h>
 #include <pruss_intc_mapping.h>
+#include <thread>
+#include <future>
 // We are using PRU0
+
 #define PRU_NUM 0
 
+void test() 
+{
+	std::cout<<"Sart"<<std::endl;
+	
+	int c = 0;
+	while(true) {
+		prussdrv_pru_wait_event(PRU_EVTOUT_1);
+		prussdrv_pru_clear_event(PRU_EVTOUT_1, PRU0_ARM_INTERRUPT);
+		c++;
+		std::cout << "Counter: "<<c << std::endl;
+	}
+	std::cout<<"End"<<std::endl;
+
+}
 
 int main(int argc, char **argv) {
 
@@ -54,37 +71,31 @@ int main(int argc, char **argv) {
 		data[i] = 0;
 	}
 	
+	
 	// Executing program
 	std::cout << "Executing program" << std::endl;
 	prussdrv_exec_program (PRU_NUM, "prudht22.bin");
 	
-	//std::cout << "Bla" <<prussdrv_pru_wait_event (PRU_EVTOUT_0)<<std::endl;
 	// Wait for PRU to halt
+	int i = 0;
+	while(true) {
+		std::cout <<prussdrv_pru_wait_event(PRU_EVTOUT_0)<<std::endl;
+		prussdrv_pru_clear_event (PRU_EVTOUT_0, PRU0_ARM_INTERRUPT);
+		std::cout << "Temperature: " <<data[0]<< std::endl;
+		std::cout << "Humidity: " <<data[1]<< std::endl;
+		if(i == 9){
+			data[2] = 123;
+			break;
+		}
+		i++;	
+	}
+
 	std::cout << "Waiting for halt" << std::endl;
-	
-	std::cout << prussdrv_pru_wait_event(PRU_EVTOUT_1)<<std::endl;
-	prussdrv_pru_clear_event (PRU_EVTOUT_1, PRU0_ARM_INTERRUPT);
-	std::cout << prussdrv_pru_wait_event(PRU_EVTOUT_1) << std::endl;
-	prussdrv_pru_clear_event (PRU_EVTOUT_1, PRU0_ARM_INTERRUPT);
-
-	prussdrv_pru_wait_event (PRU_EVTOUT_0);
-	std::cout << "Done" << std::endl;
-	
-	std::cout << "Temp: " <<data[0]<< std::endl;
-	std::cout << "Humi: " <<data[1]<< std::endl;
-	std::cout << "Check: " <<data[2]<< std::endl;
-	std::cout << "Add: " <<data[3]<< std::endl;
-	std::cout << "All: " <<data[4]<<std::endl;
-
-	std::cout << "Temp0: " <<data[5]<< std::endl;
-	std::cout << "Temp1: " <<data[6]<< std::endl;
-	std::cout << "Humi0: " <<data[7]<< std::endl;
-	std::cout << "Humi1: " <<data[8]<< std::endl;
-
-
+	std::cout << prussdrv_pru_wait_event (PRU_EVTOUT_1)<<std::endl;
 
 	// Cleanup
 	prussdrv_pru_clear_event (PRU_EVTOUT_0, PRU0_ARM_INTERRUPT);
+	prussdrv_pru_clear_event (PRU_EVTOUT_1, PRU0_ARM_INTERRUPT);
 	prussdrv_pru_disable (PRU_NUM);
 	prussdrv_exit ();
 }
