@@ -130,7 +130,7 @@ CHECKSUM_CONTINUE:
 
 		//When checksum != sum of humidity + temperature
 		//halt pru
-		QBNE QUIT, r15, r14
+		QBNE SYNCERROR, r15, r14
 		
 		SBCO r13, CONST_RAM, 0, 2
 		SBCO r13.w2, CONST_RAM, 4, 2
@@ -142,7 +142,7 @@ CHECKSUM_CONTINUE:
 		MOV	R31.b0, PRU0_R31_VEC_VALID | 3
 		//Wait for two seconds to ensure specified behaviour.
 		delaysec 2 
-		LBCO r20, CONST_RAM, 8, 4
+		LBCO r20, CONST_RAM, 12, 4
 		//Loop
 		QBNE MAINLOOP, r20, MAXLOOP
 	
@@ -159,3 +159,8 @@ BITSET_CHECKSUM:
 		JMP CHECKSUM_CONTINUE
 		
 		
+SYNCERROR:
+    MOV r13, 1
+	SBCO r13, CONST_RAM, 8, 4	
+	MOV	R31.b0, PRU0_R31_VEC_VALID | 	3
+	JMP QUIT 	
