@@ -51,7 +51,9 @@ START:
 		//Set CTBIR0 to address of local mem
 		SBBO r0, r1, 0, 4
 		// C24 aka CONST_RAM points to local memory
-	
+
+		//Error rate counter
+		MOV r19, 0
 MAINLOOP:		
 		// When communication between MCU and DHT begins MCU will pull down
 		// data bus for 1~10ms. Therefor, pull down and wait for 1ms.
@@ -129,11 +131,13 @@ CHECKSUM_CONTINUE:
 		ADD r15.b0, r15.b0, r13.b3
 
 		//When checksum != sum of humidity + temperature
-		//halt pru
-		QBNE SYNCERROR, r15, r14
-		
+		//increase error counter and continue.
+		QBEQ NOERROR, r15, r14
+		ADD r19,r19, 1
+NOERROR:		
 		SBCO r13, CONST_RAM, 0, 2
 		SBCO r13.w2, CONST_RAM, 4, 2
+		SBCO r19, CONST_RAM, 8, 4
 		
 		//Inform host that we are done with this cycle by
 		//sending PRU_EVENT_0
@@ -142,6 +146,7 @@ CHECKSUM_CONTINUE:
 		MOV	R31.b0, PRU0_R31_VEC_VALID | 3
 		//Wait for two seconds to ensure specified behaviour.
 		delaysec 2 
+		//Check if CPU send terminate symbol
 		LBCO r20, CONST_RAM, 12, 4
 		//Loop
 		QBNE MAINLOOP, r20, MAXLOOP
@@ -158,9 +163,3 @@ BITSET_CHECKSUM:
 		OR r14, r14, r11
 		JMP CHECKSUM_CONTINUE
 		
-		
-SYNCERROR:
-    MOV r13, 1
-	SBCO r13, CONST_RAM, 8, 4	
-	MOV	R31.b0, PRU0_R31_VEC_VALID | 	3
-	JMP QUIT 	

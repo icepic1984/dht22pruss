@@ -4,13 +4,17 @@ LIBS+=-lprussdrv -lpthread
 PASM=~/prusslib/pasmc
 EXECUTABLE=prudht22
 DEVICEOVERLAY=DM-GPIO-PRU
+OBJECTS=prudht22.o bbbdht22.o
 
-all: $(EXECUTABLE)  $(EXECUTABLE).bin $(EXECUTABLE).o $(DEVICEOVERLAY).dtbo
+
+all: $(EXECUTABLE) $(OBJECTS) $(EXECUTABLE).bin  $(DEVICEOVERLAY).dtbo
+
+$(EXECUTABLE) : $(OBJECTS) 
+	g++  $(LIBPATH)  $(LIBS) $+ -o $@
+
 %.o: %.cpp
 	g++ -std=c++11 -c $(INCLUDEPATH) $< 
 
-% : %.o
-	g++  $(LIBPATH)  $(LIBS) $< -o $@
 
 %.bin : %.p
 	$(PASM) -b $<
@@ -20,4 +24,4 @@ all: $(EXECUTABLE)  $(EXECUTABLE).bin $(EXECUTABLE).o $(DEVICEOVERLAY).dtbo
 	cp $(basename $@)-00A0.dtbo /lib/firmware
 
 clean: 
-	-rm -rf $(EXECUTABLE) $(EXECUTABLE).o $(EXECUTABLE).bin
+	-rm -rf $(EXECUTABLE) $(OBJECTS) $(EXECUTABLE).bin
