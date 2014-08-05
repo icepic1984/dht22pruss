@@ -19,42 +19,41 @@
 // Bits 16-23 => C25_BLK_INDEX
 #define CTBIR0 0x22020
 
-	
 // Memory Maps for GPIO-Pins, see Section 2.1 Table 2-1 AMTR
-#define GPIO0 0x44E07000		
+#define GPIO0 0x44E07000
 #define GPIO1 0x4804C000
 #define GPIO2 0x481AC000
 #define GPIO3 0x481AE000
 
-// GPIO Related register and addresses. See 25.4.1 Table 2504.1 Table 25-5 AMTR	
+// GPIO Related register and addresses. See 25.4.1 Table 2504.1 Table 25-5 AMTR
 #define GPIO_CLEARDATAOUT 0x190
 #define GPIO_SETDATAOUT 0x194
 #define GPIO_DIRECTION 0x134
-#define GPIO_DIRECTION2 0x142	
+#define GPIO_DIRECTION2 0x142
 #define GPIO_DATAIN 0x138
 
 // Definition for pin setup
 #define GPIO_LOW 0x190
-#define GPIO_HIGH 0x194		
+#define GPIO_HIGH 0x194
 #define GPIO_INPUT 1
 #define GPIO_OUTPUT 0
 
-// Definitions to calculate delay		
+// Definitions to calculate delay
 #define CLOCKS_PER_LOOP 2 // loop contains two instructions, one clock each
 #define CYCLE_PER_SECOND 200000000 / CLOCKS_PER_LOOP
 #define CYCLE_PER_MILLISECOND 200000 / CLOCKS_PER_LOOP
-#define	CYCLE_PER_MICROSECOND 200 / CLOCKS_PER_LOOP
+#define CYCLE_PER_MICROSECOND 200 / CLOCKS_PER_LOOP
 
 // Multiply op1 and op2. Result is stored in R26, R27.
 // Multiplication is done using the MAC Unit.
 // See 4.5.3.2 AMTR
 // ONLY WORKS WITH PASM COMMUNITY BUILD
-.macro MUL 
+.macro MUL
 .mparam OP1, OP2
 		MOV r25,0
 		XOUT 0, R25,1
-		MOV R28, OP1 
-		MOV R29, OP2 
+		MOV R28, OP1
+		MOV R29, OP2
 		XIN 0, R27,4
 		XIN 0, R26,4
 .endm	
@@ -62,18 +61,20 @@
 // Wait for sec seconds
 // We are using only 32 Bits registers
 // therefore we can only wait for up to 42 seconds
-.macro delaysec 
+.macro delaysec
 .mparam sec
 		MUL sec, CYCLE_PER_SECOND
-WAITS:	SUB r26, r26, 1     
+WAITS:
+		SUB r26, r26, 1    
 		QBNE WAITS, r26, 0
 .endm
 
-// Wait for ms millisecond		
+// Wait for ms millisecond
 .macro delayms 
 .mparam ms
 		MUL ms, CYCLE_PER_MILLISECOND
-WAITMS:	SUB r26, r26, 1
+WAITMS:
+		SUB r26, r26, 1
 		QBNE WAITMS, r26,0
 .endm
 
@@ -82,7 +83,8 @@ WAITMS:	SUB r26, r26, 1
 .mparam us
 		MUL us, CYCLE_PER_MICROSECOND
 		MOV r23,26
-WAITUS:	SUB r26, r26, 1
+WAITUS:
+		SUB r26, r26, 1
 		QBNE WAITUS, r26, 0
 .endm
 
@@ -91,14 +93,14 @@ WAITUS:	SUB r26, r26, 1
 // 0 => OUTPUT
 .macro setPinMode
 .mparam pin, mode
-		// Buid gpio address 
+		// Buid gpio address
 		MOV r4, GPIO1 | GPIO_DIRECTION
 		// Load content to r5 register
 		LBBO r5, r4, 0, 4
 		// Clear bit corresponding to pin
 		CLR r5, pin
 		// Build mask
-		MOV r6, mode << pin 
+		MOV r6, mode << pin
 		// Set pin to mode
 		OR r5, r5, r6
 		// Write back to address
@@ -109,32 +111,33 @@ WAITUS:	SUB r26, r26, 1
 .macro digitalWrite
 .mparam pin, signal
 		// Build addrss
-        MOV r4, GPIO1 | signal 
+		MOV r4, GPIO1 | signal
 		// Set bit corresponding to pin
 		MOV r5, 1<<pin
 		// Write to address
-        SBBO r5, r4, 0 ,4
+		SBBO r5, r4, 0 ,4
 .endm
 		
 // Read from pin and write result to r5.t0
-.macro digitalRead		
-.mparam pin		
+.macro digitalRead
+.mparam pin
 		MOV r3, 1 << pin
 		MOV r4 , GPIO1 | GPIO_DATAIN
 		LBBO r5, r4, 0, 4
 		AND r5, r5, r3
-	    LSR r5, r5, pin	
-.endm		
-	
-// Wait until pin change to signal		
+		LSR r5, r5, pin
+.endm
+		
+// Wait until pin change to signal
 .macro waitForSignal
 .mparam pin, signal
 		MOV r6, 0
-CHECKW:	digitalRead pin 
+CHECKW:
+		digitalRead pin
 		ADD r6, r6, 1
 		// When r5 != 1 (Signal low) => Loop
 		QBNE CHECKW, r5, signal
-.endm			
+.endm	
 
 
-#endif  
+#endif
