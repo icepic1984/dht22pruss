@@ -52,7 +52,8 @@ START:
 		SBBO r0, r1, 0, 4
 		// C24 aka CONST_RAM points to local memory
 
-		//Error rate counter
+		//Cycle and error counter
+		MOV r18, 0
 		MOV r19, 0
 MAINLOOP:		
 		// When communication between MCU and DHT begins MCU will pull down
@@ -135,9 +136,11 @@ CHECKSUM_CONTINUE:
 		QBEQ NOERROR, r15, r14
 		ADD r19,r19, 1
 NOERROR:		
+		ADD r18,r18,1
 		SBCO r13, CONST_RAM, 0, 2
 		SBCO r13.w2, CONST_RAM, 4, 2
 		SBCO r19, CONST_RAM, 8, 4
+		SBCO r18, CONST_RAM, 12, 4		
 		
 		//Inform host that we are done with this cycle by
 		//sending PRU_EVENT_0
@@ -147,7 +150,7 @@ NOERROR:
 		//Wait for two seconds to ensure specified behaviour.
 		delaysec 2 
 		//Check if CPU send terminate symbol
-		LBCO r20, CONST_RAM, 12, 4
+		LBCO r20, CONST_RAM, 16, 4
 		//Loop
 		QBNE MAINLOOP, r20, MAXLOOP
 	

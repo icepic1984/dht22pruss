@@ -48,16 +48,16 @@ void DHT22::start()
 void DHT22::run()
 {
 	while(true) {
-		std::cout << "Cycle" << std::endl;
 		prussdrv_pru_wait_event(PRU_EVTOUT_0);
 		prussdrv_pru_clear_event (PRU_EVTOUT_0, PRU0_ARM_INTERRUPT);
 		//Read data from pru
 		{
 			std::lock_guard<std::mutex> lck(mtx_);
-			cycles_++;
 			int t_temp = data_[0];
 			int t_hum = data_[1];
 			errors_ = data_[2];
+			cycles_ = data_[3];
+			   
 			if(t_temp & 80000000)
 			   temperature_ = static_cast<float>(t_temp)*-0.1f;
 			else
@@ -65,12 +65,10 @@ void DHT22::run()
 			humidity_ = static_cast<float>(t_hum)* 0.1f;
 		}	
 		if(halt_ == true){
-			std::cout << "Send Halt" << std::endl;
-			data_[3] = STOP;
+			data_[4] = STOP;
 			break;
 		}
 	}
-	std::cout << "Stop" << std::endl;
 }
 
 float DHT22::temperature() 
@@ -107,11 +105,9 @@ bool DHT22::is_running()
 {return !halt_;}
 
 void DHT22::halt(){
-	std::cout << "Halt" << std::endl;
 	if(halt_ == true)
 	   return;
 	halt_ = true;	
-	
 }
 
 
