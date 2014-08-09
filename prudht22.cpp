@@ -15,6 +15,7 @@ void handler(int param)
 int main(int argc, char **argv) {
 
 	std::signal(SIGINT, handler);
+	std::signal(SIGTERM, handler);
 	std::string path = "prudht22.bin";
 
  	DHT22Ptr_t dht22(new DHT22(path,Pru::BPRU0));
@@ -23,12 +24,14 @@ int main(int argc, char **argv) {
  	dht22->start();
 	std::thread st([&io_service](){io_service.run();});
 	
-	while(dht22->is_running()) {
-		if(stop)
-		   dht22->halt();
-	}
-	io_service.stop();
-	st.join();
+	 while(dht22->is_running()) {
+		 if(stop)
+			dht22->halt();
+		 std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+	 
+	 }
+	 io_service.stop();
+	 st.join();
 }
 
 
