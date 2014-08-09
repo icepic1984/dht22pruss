@@ -6,11 +6,20 @@
 #include <thread>
 
 
+enum class Pru {BPRU0,BPRU1};
+
+class DHT22;
+typedef std::shared_ptr<DHT22> DHT22Ptr_t;
+
 class DHT22 
 {
 public:
-   DHT22(const std::string& path);
+   
+   DHT22(const std::string& path, const Pru& pru);
+   DHT22(const DHT22&) = delete;
+   DHT22& operator=(const DHT22&) = delete;
    ~DHT22();
+
    void start();
    bool is_running();
    float temperature();
@@ -19,11 +28,16 @@ public:
    int errors();
    int cycles();
    void halt();
+   std::string message();
    
 private:
    void run();
+
+   static bool constructed_;
+   
    std::atomic<bool> halt_;
    std::string path_;
+   Pru pru_;
    float temperature_;
    float humidity_;
    int cycles_;

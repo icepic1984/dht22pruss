@@ -1,9 +1,12 @@
 #include <iostream>
 #include <csignal>
+#include <sstream>
+#include <boost/asio.hpp>
 #include "bbbdht22.hpp"
+#include "server.hpp"
 
-// We are using PRU0
-//#define PRU_NUM 0
+using boost::asio::ip::tcp;
+
 bool stop = false;
 
 void handler(int param)
@@ -14,15 +17,18 @@ int main(int argc, char **argv) {
 	std::signal(SIGINT, handler);
 	std::string path = "prudht22.bin";
 
-	DHT22 dht22(path);
-	dht22.start();
-	while(dht22.is_running()){
+ 	DHT22Ptr_t dht22(new DHT22(path,Pru::BPRU0));
+	boost::asio::io_service io_service;
+	Server server(dht22,io_service);
+ 	dht22->start();
+	std::thread st([&io_service](){io_service.run();});
+	
+	while(dht22->is_running()) {
 		if(stop)
-		   dht22.halt();
-		std::cout << "Temp: "<<dht22.temperature()
-				  << " Hum: "<<dht22.humidity()
-				  << " Cycle: "<<dht22.cycles()
-				  << " Error: "<<dht22.error_rate()
-				  << "Total Error: "<<dht22.errors()<< std::endl;
-	}	
+		   dht22->halt();
+	}
+	io_service.stop();
+	st.join();
 }
+
+

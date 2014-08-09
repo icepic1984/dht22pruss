@@ -1,10 +1,10 @@
 LIBPATH=-L ~/prusslib/lib/
 INCLUDEPATH=-I ~/prusslib/include/
-LIBS+=-lprussdrv -lpthread
+LIBS+=-lprussdrv -lpthread -lboost_system
 PASM=~/prusslib/pasmc
 EXECUTABLE=prudht22
 DEVICEOVERLAY=DM-GPIO-PRU
-OBJECTS=prudht22.o bbbdht22.o
+OBJECTS=prudht22.o bbbdht22.o server.o
 
 
 all: $(EXECUTABLE) $(OBJECTS) $(EXECUTABLE).bin  $(DEVICEOVERLAY).dtbo
