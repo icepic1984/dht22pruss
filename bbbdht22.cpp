@@ -6,6 +6,7 @@
 
 bool DHT22::constructed_ = false;
 
+
 DHT22::DHT22(const std::string& path, const Pru& pru) :
 	halt_(true),
 	path_(path),
@@ -19,20 +20,18 @@ DHT22::DHT22(const std::string& path, const Pru& pru) :
 	if(constructed_) throw std::runtime_error("Already constructed");
 	tpruss_intc_initdata pruss_intc_initdata = PRUSS_INTC_INITDATA;
 	int ret = 0;
-	ret = prussdrv_init();
-	if(ret ==  -1) throw std::runtime_error("prussdrv_init failed");
-	ret = prussdrv_open(PRU_EVTOUT_0);
-	if(ret ==  -1) throw std::runtime_error("prussdrv_open failed");
-	ret = prussdrv_open(PRU_EVTOUT_1);
-	if(ret ==  -1) throw std::runtime_error("prussdrv_open failed");
-	ret = prussdrv_pruintc_init(&pruss_intc_initdata);
-	if(ret == -1) throw std::runtime_error("prussdrv_pruintc_init failed");
+	pruss_wrapper(prussdrv_init,"prussdrv_init");
+	pruss_wrapper(prussdrv_open,"prussdrv_open", PRU_EVTOUT_0);
+	pruss_wrapper(prussdrv_open,"prussdrv_open", PRU_EVTOUT_1);
+	pruss_wrapper(prussdrv_pruintc_init, "prussdrv_pruintc_init",
+				  &pruss_intc_initdata);
 	if (Pru::BPRU0 == pru_){
-			ret = prussdrv_map_prumem (PRUSS0_PRU0_DATARAM, (void **)&data_);
+		pruss_wrapper(prussdrv_map_prumem,"prussdrv_map_prumem",
+					  PRUSS0_PRU0_DATARAM, (void **)&data_);
 	} else if (Pru::BPRU1 == pru_) {
-			ret = prussdrv_map_prumem (PRUSS0_PRU1_DATARAM, (void **)&data_);
+		pruss_wrapper(prussdrv_map_prumem,"prussdrv_map_prumem",
+					  PRUSS0_PRU1_DATARAM, (void **)&data_);
 	}
-	if(ret == -1) throw std::runtime_error("prussdrv_map_prumem failed");
 	for(int i = 0; i < 100; ++i){
 		data_[i] = 0;
 	}
@@ -44,15 +43,18 @@ DHT22::~DHT22()
 	if(process_.joinable()) {
 		process_.join();
 		std::cout << "Waiting for halt" << std::endl;
-		prussdrv_pru_wait_event (PRU_EVTOUT_1);
+		pruss_wrapper(prussdrv_pru_wait_event,"prussdrv_pru_wait_event",
+					  PRU_EVTOUT_1);
 		std::cout << "Terminating" << std::endl;
-		prussdrv_pru_clear_event(PRU_EVTOUT_0, PRU0_ARM_INTERRUPT);
-		prussdrv_pru_clear_event(PRU_EVTOUT_1, PRU0_ARM_INTERRUPT);
+		pruss_wrapper(prussdrv_pru_clear_event,"prussdrv_pru_clear_event ev0",
+					  PRU_EVTOUT_0,PRU0_ARM_INTERRUPT);
+		pruss_wrapper(prussdrv_pru_clear_event,"prussdrv_pru_clear_event ev1",
+					  PRU_EVTOUT_1,PRU0_ARM_INTERRUPT);
 	}
 	if(Pru::BPRU0 == pru_){
-		prussdrv_pru_disable(PRU0);
+		pruss_wrapper(prussdrv_pru_disable,"prussdrv_pru_disable", PRU0);
 	} else if (Pru::BPRU1 == pru_) {
-		prussdrv_pru_disable(PRU1);
+		pruss_wrapper(prussdrv_pru_disable,"prussdrv_pru_disable", PRU1);
 	}
 }
 
@@ -60,13 +62,12 @@ void DHT22::start()
 {
 	int ret = 0;
 	if(Pru::BPRU0 == pru_){
-		ret = prussdrv_exec_program (PRU0, path_.c_str());
+		pruss_wrapper(prussdrv_exec_program,"prussdrv_exec_program",
+					  PRU0,path_.c_str());
 	} else if (Pru::BPRU1 == pru_) {
-		ret = prussdrv_exec_program (PRU1, path_.c_str());
+		pruss_wrapper(prussdrv_exec_program,"prussdrv_exec_program",
+					  PRU1, path_.c_str());
 	}
-	if(ret == -1) 
-		throw std::runtime_error("prussdrv_exec_program failed");
-		
 	halt_ = false;
 	process_ = std::thread(&DHT22::run,this);	
 	std::cout << "Thread started" << std::endl;
@@ -75,9 +76,10 @@ void DHT22::start()
 void DHT22::run()
 {
 	while(true) {
-		prussdrv_pru_wait_event(PRU_EVTOUT_0);
-		prussdrv_pru_clear_event (PRU_EVTOUT_0, PRU0_ARM_INTERRUPT);
-		//Read data from pru
+		pruss_wrapper(prussdrv_pru_wait_event, "prussdrv_pru_wait_event 0",
+					  PRU_EVTOUT_0);
+		pruss_wrapper(prussdrv_pru_clear_event, "prussdrv_pru_clear_event",
+					  PRU_EVTOUT_0, PRU0_ARM_INTERRUPT);
 		{
 			std::lock_guard<std::mutex> lck(mtx_);
 			int t_temp = data_[0];

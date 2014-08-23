@@ -5,7 +5,6 @@
 #include <atomic>
 #include <thread>
 
-
 enum class Pru {BPRU0,BPRU1};
 
 class DHT22;
@@ -49,5 +48,12 @@ private:
    
 };
 
+template<typename Func, typename... Args>
+void pruss_wrapper(Func func, const std::string& name, Args... args)
+{
+	int ret = func(args...);
+	if(ret == -1)
+	   throw std::runtime_error(name);
+}
 
 #endif
