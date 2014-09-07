@@ -28,6 +28,7 @@
 #define WFS 40
 
 #define MAXLOOP 123	
+#define CPUDONE 0
 .struct dht22metadata
 		.u32 mask
 .ends
@@ -146,7 +147,14 @@ NOERROR:
 		//sending PRU_EVENT_0
 		//PRU_EVENT_0 needs to be the first event.
 		//Don't know why
-		MOV	R31.b0, PRU0_R31_VEC_VALID | 3
+		//MOV	R31.b0, PRU0_R31_VEC_VALID | 3
+		//MOV	R31.b0, PRU0_R31_VEC_VALID | 3
+		MOV r20, 1
+		SBCO r20, CONST_RAM, 20, 4
+WAITCPU:		
+		LBCO r20, CONST_RAM, 20, 4
+		QBNE WAITCPU, r20,CPUDONE
+
 		//Wait for two seconds to ensure specified behaviour.
 		delaysec 2 
 		//Check if CPU send terminate symbol

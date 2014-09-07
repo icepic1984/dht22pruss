@@ -76,28 +76,41 @@ void DHT22::start()
 void DHT22::run()
 {
 	while(true) {
-		pruss_wrapper(prussdrv_pru_wait_event, "prussdrv_pru_wait_event 0",
-					  PRU_EVTOUT_0);
-		pruss_wrapper(prussdrv_pru_clear_event, "prussdrv_pru_clear_event",
-					  PRU_EVTOUT_0, PRU0_ARM_INTERRUPT);
+		 std::cout << "Wait for pru" << std::endl;
+		 while(read_from_pru(STATUS) != 1)
+		   std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+		
+		
+		// pruss_wrapper(prussdrv_pru_wait_event, "prussdrv_pru_wait_event 0",
+		// 			  PRU_EVTOUT_0);
+		// pruss_wrapper(prussdrv_pru_clear_event, "prussdrv_pru_clear_event",
+		// 			  PRU_EVTOUT_0, PRU0_ARM_INTERRUPT);
+		std::cout << "Cycle done" << std::endl;
 		{
 			std::lock_guard<std::mutex> lck(mtx_);
-			int t_temp = data_[0];
-			int t_hum = data_[1];
-			errors_ = data_[2];
-			cycles_ = data_[3];
+			int t_temp = read_from_pru(TEMP);
+			int t_hum = read_from_pru(HUM);
+			errors_ = read_from_pru(ERROR);
+			cycles_ = read_from_pru(CYCLE);
 			if(t_temp & 80000000)
 			   temperature_ = static_cast<float>(t_temp)*-0.1f;
 			else
 			   temperature_ = static_cast<float>(t_temp) * 0.1f;
 			humidity_ = static_cast<float>(t_hum)* 0.1f;
+			write_to_pru(STATUS, 0);
 		}	
 		if(halt_ == true){
-			data_[4] = STOP;
+			write_to_pru(HALT,STOP);
 			break;
 		}
 	}
 }
+
+unsigned int DHT22::read_from_pru(DataField field)
+{return data_[field];}
+
+void DHT22::write_to_pru(DataField field, unsigned int value)
+{data_[field] = value;}
 
 float DHT22::temperature() 
 {

@@ -30,8 +30,20 @@ public:
    std::string message();
    
 private:
+   enum DataField
+   {
+	   TEMP,
+	   HUM,
+	   ERROR,
+	   CYCLE,
+	   HALT,
+	   STATUS
+   };
+   
    void run();
-
+   unsigned int read_from_pru(DataField field);
+   void write_to_pru(DataField field, unsigned int value);
+   
    static bool constructed_;
    
    std::atomic<bool> halt_;
