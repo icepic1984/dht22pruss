@@ -19,7 +19,6 @@ DHT22::DHT22(const std::string& path, const Pru& pru) :
 {
 	if(constructed_) throw std::runtime_error("Already constructed");
 	tpruss_intc_initdata pruss_intc_initdata = PRUSS_INTC_INITDATA;
-	int ret = 0;
 	pruss_wrapper(prussdrv_init,"prussdrv_init");
 	pruss_wrapper(prussdrv_open,"prussdrv_open", PRU_EVTOUT_0);
 	pruss_wrapper(prussdrv_open,"prussdrv_open", PRU_EVTOUT_1);
