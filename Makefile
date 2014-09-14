@@ -13,7 +13,7 @@ $(EXECUTABLE) : $(OBJECTS)
 	g++  $(LIBPATH)  $(LIBS) $+ -o $@
 
 %.o: %.cpp
-	g++ -std=c++11 -c $(INCLUDEPATH) $< 
+	g++ -O2 -std=c++11 -c $(INCLUDEPATH) $< 
 
 
 %.bin : %.p

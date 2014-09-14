@@ -79,25 +79,22 @@ void DHT22::run()
 		 std::cout << "Wait for pru" << std::endl;
 		 while(read_from_pru(STATUS) != 1)
 		   std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-		
-		
-		// pruss_wrapper(prussdrv_pru_wait_event, "prussdrv_pru_wait_event 0",
-		// 			  PRU_EVTOUT_0);
-		// pruss_wrapper(prussdrv_pru_clear_event, "prussdrv_pru_clear_event",
-		// 			  PRU_EVTOUT_0, PRU0_ARM_INTERRUPT);
 		std::cout << "Cycle done" << std::endl;
 		{
 			std::lock_guard<std::mutex> lck(mtx_);
 			int t_temp = read_from_pru(TEMP);
 			int t_hum = read_from_pru(HUM);
-			errors_ = read_from_pru(ERROR);
-			cycles_ = read_from_pru(CYCLE);
-			if(t_temp & 80000000)
-			   temperature_ = static_cast<float>(t_temp)*-0.1f;
-			else
-			   temperature_ = static_cast<float>(t_temp) * 0.1f;
-			humidity_ = static_cast<float>(t_hum)* 0.1f;
-			write_to_pru(STATUS, 0);
+			int t_errors = read_from_pru(ERROR);
+			if(t_errors == errors_){
+				cycles_ = read_from_pru(CYCLE);
+				if(t_temp & 80000000)
+				   temperature_ = static_cast<float>(t_temp)*-0.1f;
+				else
+				   temperature_ = static_cast<float>(t_temp) * 0.1f;
+				humidity_ = static_cast<float>(t_hum)* 0.1f;
+				write_to_pru(STATUS, 0);
+			} 
+			errors_ = t_errors;
 		}	
 		if(halt_ == true){
 			write_to_pru(HALT,STOP);

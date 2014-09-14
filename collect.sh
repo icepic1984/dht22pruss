@@ -28,10 +28,11 @@ fi
 
 while true 
 do
-	humidity=`nc alarm 666 | cut -d" " -f2`
+	humidity=$(nc alarm 666 | cut -d" " -f2)
 	temperature=$(nc alarm 666 | cut -d" " -f4)
+	error=$(nc alarm 666 | cut -d" " -f7)
 	rrdtool update $ROBINFILE N:$temperature:$humidity
-	echo "Temp: $temperature Hum: $humidity"
+	echo "Temp: $temperature Hum: $humidity Error: $error"
 	sleep 10 
 done
 
